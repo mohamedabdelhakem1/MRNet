@@ -37,7 +37,13 @@ class MRNet_data_generator(keras.utils.Sequence):
     for i, ID in enumerate(list_IDs_temp):
         exam_path = os.path.join(self.data_path, self.exam_type)
         exam = np.load(os.path.join(exam_path, ID+'.npy'))
-        X[i,] = np.array([np.array(Image.fromarray(s).resize(self.scale_to)) for s in exam])
+        e = []
+        for s in exam:
+          s = np.array(Image.fromarray(s).resize(self.scale_to))
+          expanded = np.array([s, s, s])
+          e.append(expanded)
+
+        X[i] = np.array(e)
         y[i] = self.labels[ID][self.label_type]
 
     return X, y
