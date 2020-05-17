@@ -1,6 +1,7 @@
 import keras
 import numpy as np
 import os
+from PIL import Image
 
 class MRNet_data_generator(keras.utils.Sequence):
   def __init__(self, datapath, IDs, labels, batch_size = 32, shuffle=True,
@@ -35,7 +36,8 @@ class MRNet_data_generator(keras.utils.Sequence):
 
     for i, ID in enumerate(list_IDs_temp):
         exam_path = os.path.join(self.data_path, self.exam_type)
-        X[i,] = np.load(os.path.join(exam_path, ID+'.npy'))
+        exam = np.load(os.path.join(exam_path, ID+'.npy'))
+        X[i,] = np.array([np.array(Image.fromarray(s).resize(self.scale_to)) for s in exam])
         y[i] = self.labels[ID][self.label_type]
 
     return X, y
