@@ -170,7 +170,7 @@ class MRNet_inception_layer(keras.layers.Layer):
     super(MRNet_inception_layer, self).__init__()
     self.inception = inceptionV3((299, 299, 3)).getModel()
     self.avg_pooling1 = AveragePooling2D(pool_size=(8, 8), padding="same")
-    self.avg_pooling2 = AveragePooling2D(pool_size=(8, 8), padding="same")
+    self.avg_pooling2 = AveragePooling2D(pool_size=(5, 5), padding="same")
     self.d1 = Dropout(0.5)
     self.d2 = Dropout(0.5)
 
@@ -179,7 +179,7 @@ class MRNet_inception_layer(keras.layers.Layer):
     self.b_size = batch_size
 
   def compute_output_shape(self, input_shape):
-    return (None, 1, 2)
+    return (None, 2)
 
   def call(self, inputs):
     arr1 = []
@@ -189,7 +189,7 @@ class MRNet_inception_layer(keras.layers.Layer):
       out1 = tf.squeeze(self.avg_pooling1(f_list[0]), axis=[1, 2])
       out1 = keras.backend.max(out1, axis=0, keepdims=True)
       out1 = tf.squeeze(out1)
-      out2 = tf.squeeze(self.avg_pooling1(f_list[1]), axis=[1, 2])
+      out2 = tf.squeeze(self.avg_pooling2(f_list[1]), axis=[1, 2])
       out2 = keras.backend.max(out2, axis=0, keepdims=True)
       out2 = tf.squeeze(out2)
       arr1.append(out1)
@@ -199,7 +199,7 @@ class MRNet_inception_layer(keras.layers.Layer):
     out1 = tf.squeeze(self.fc1(self.d1(out1)))
     out2 = tf.squeeze(self.fc2(self.d2(out2)))
     out = tf.stack([out1, out2], axis = -1)
-    out = tf.reshape(out, shape=(self.b_size, 1, 2))
+    out = tf.reshape(out, shape=(self.b_size, 2))
     return out
 
 
@@ -209,7 +209,7 @@ def MRNet_inc_model(combination = ["abnormal", "axial"]):
   model.add(MRNet_inception_layer(b_size))
   model(Input(shape=(None, 299, 299, 3)))
   model.summary()
-  model.compile(optimizer=tf.keras.optimizers.Adam(), loss="categorical_crossentropy", metrics=['accuracy'])
+  model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=True), metrics=['accuracy'])
 
   checkpoint_path = "training_inception/" + combination[0] + "/" + combination[1]+"/cp.ckpt"
   checkpoint_dir = os.path.dirname(checkpoint_path)

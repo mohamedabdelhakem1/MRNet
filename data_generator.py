@@ -4,7 +4,7 @@ import os
 from PIL import Image
 
 class MRNet_data_generator(keras.utils.Sequence):
-  def __init__(self, datapath, IDs, labels, batch_size = 32, shuffle=True,
+  def __init__(self, datapath, IDs, labels, batch_size = 1, shuffle=True,
                scale_to = (256, 256), label_type="abnormal", exam_type="axial",
                train=True, model="vgg"):
     self.path = datapath
@@ -45,7 +45,7 @@ class MRNet_data_generator(keras.utils.Sequence):
     # print("tototototototot")
     # print(list_IDs_temp)
     if self.model == "inception":
-      y = np.empty((self.batch_size,1, 2), dtype=int)
+      y = np.empty((self.batch_size, 2), dtype=int)
     else:
       y = np.empty((self.batch_size), dtype=int)
     arr = []
@@ -63,8 +63,8 @@ class MRNet_data_generator(keras.utils.Sequence):
         # X = np.stack(e, axis=0)
         _y = self.labels[ID][self.label_type]
         if self.model == "inception":
-          y[i][0][0] = _y
-          y[i][0][1] = _y
+          y[i][0] = _y
+          y[i][1] = _y
         else:
           y[i] = _y
         
