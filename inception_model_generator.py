@@ -7,6 +7,9 @@ from keras.layers.core import Layer
 from keras.layers import Conv2D, MaxPool2D, Dropout, Dense, Input, concatenate, GlobalAveragePooling2D, AveragePooling2D, Flatten, BatchNormalization
 from keras.utils import np_utils
 import os
+from keras.metrics import categorical_accuracy,binary_accuracy
+from keras.utils.vis_utils import plot_model
+
 
 
 
@@ -105,72 +108,57 @@ class inceptionV3():
 
   def getModel(self):
     input = Input(shape=self.shape);
-    # 224x224x3
+    # 299 x 299 x 3
     x = self.ConvBatchNorm(filters=32,kernel_size=(3,3),strides=(2,2),padding='valid',activation='relu')(input)
-    # 112x112x32
+    # 149 x 149 x 32
     x = self.ConvBatchNorm(filters=32,kernel_size=(3,3),strides=(1,1),padding='valid',activation='relu')(x)
-    # 110x110x32
+    # 147 x 147 x 32
     x = self.ConvBatchNorm(filters=64,kernel_size=(3,3),strides=(1,1),padding='same',activation='relu')(x)  
-    # 110x110x64
+    # 147 x 147 x64
     x = MaxPool2D(pool_size=(3,3),strides=(2,2))(x)
-    # 55x55x64
+    # 73 x 73 x 64
     x = self.ConvBatchNorm(filters=80,kernel_size=(1,1),strides=(1,1),padding='valid',activation='relu')(x)
-    # 55x55x80
+    # 73 x 73 x 80
     x = self.ConvBatchNorm(filters=192,kernel_size=(3,3),strides=(1,1),padding='valid',activation='relu')(x)
-    # 53x53x192
+    # 71 x 71 x 192    
     x = MaxPool2D(pool_size=(3,3),strides=(2,2))(x)
-    # 55x55x64
-    x = self.ConvBatchNorm(filters=80,kernel_size=(1,1),strides=(1,1),padding='valid',activation='relu')(x)
-    # 55x55x80
-    x = self.ConvBatchNorm(filters=192,kernel_size=(3,3),strides=(1,1),padding='valid',activation='relu')(x)
-    # 53x53x192
-    x = MaxPool2D(pool_size=(3,3),strides=(2,2))(x)
-    # 26x26x192
+    # 35 x 35 x192
     x = self.inceptionModlueA(x,filter1_1x1=64,filter2_pool=32,filter3_1x1=48,filter3_3x3=64,filter4_1x1=64,filter4_3x3=96,filter4_3x3_2=96);
-    # 26x26x256
+    # 35 x 35 x 256
     x = self.inceptionModlueA(x,filter1_1x1=64,filter2_pool=64,filter3_1x1=48,filter3_3x3=64,filter4_1x1=64,filter4_3x3=96,filter4_3x3_2=96);
-    # 26x26x288
+    # 35 x 35 x288
     x = self.inceptionModlueA(x,filter1_1x1=64,filter2_pool=64,filter3_1x1=48,filter3_3x3=64,filter4_1x1=64,filter4_3x3=96,filter4_3x3_2=96);
-    # 26x26x288
-
+    # 35 x 35 x 288
     x = self.inceptionModlueD(x,filter1_3x3=384 , filter2_1x1=64, filter2_3x3=96 ,  filter2_3x3_2=96);
-    # 13x13x768
-
+    # 17 x 17 x 768
     x =  self.inceptionModuleB(x,filter1_1x1=192,filter2_pool=192,filter3_1x1=128,filter3_1xn=128,filter3_nx1=192,filter4_1x1=128,filter4_1xn=128,filter4_nx1=128
                           ,filter4_1xn_1=128,filter4_nx1_2=192);
+    # 17 x 17 x 768
     x =  self.inceptionModuleB(x,filter1_1x1=192,filter2_pool=192,filter3_1x1=128,filter3_1xn=128,filter3_nx1=192,filter4_1x1=128,filter4_1xn=128,filter4_nx1=128
                           ,filter4_1xn_1=128,filter4_nx1_2=192);
+     # 17 x 17 x 768
     x =  self.inceptionModuleB(x,filter1_1x1=192,filter2_pool=192,filter3_1x1=160,filter3_1xn=160,filter3_nx1=192,filter4_1x1=160,filter4_1xn=160,filter4_nx1=160
                           ,filter4_1xn_1=160,filter4_nx1_2=192);
-                          
+     # 17 x 17 x 768      
     x =  self.inceptionModuleB(x,filter1_1x1=192,filter2_pool=192,filter3_1x1=160,filter3_1xn=160,filter3_nx1=192,filter4_1x1=160,filter4_1xn=160,filter4_nx1=160
                           ,filter4_1xn_1=160,filter4_nx1_2=192);
-
+     # 17 x 17 x 768
     x =  self.inceptionModuleB(x,filter1_1x1=192,filter2_pool=192,filter3_1x1=192,filter3_1xn=192,filter3_nx1=192,filter4_1x1=192,filter4_1xn=192,filter4_nx1=192
                           ,filter4_1xn_1=192,filter4_nx1_2=192);
-    
+     # 17 x 17 x 768
     x1 = x;
-    # print(x1.shape)
-    x1 = AveragePooling2D((5, 5), strides=3,padding='valid')(x1)
-    # print(x1.shape)
-    x1 = self.ConvBatchNorm(128, (1, 1), padding='same', activation='relu')(x1)
-    # print(x1.shape)
-    # x1 = Flatten()(x1)
-    # x1 = Dense(1024, activation='relu')(x1)
-    # x1 = Dropout(0.7)(x1)
-    # x1 = Dense(1, activation='sigmoid', name='auxilliary_output_1')(x1)
 
+    x1 = AveragePooling2D((5, 5), strides=3,padding='valid')(x1)
+    # 5 x 5 x 768
+    x1 = self.ConvBatchNorm(128, (1, 1), padding='same', activation='relu')(x1)
+   
 
     x = self.inceptionModlueE(x,filter1_1x1=192,filter1_3x3=320 , filter2_1x1=192, filter2_1x7=192 ,filter2_7x1 =192 ,filter2_3x3=192);
 
     x = self.inceptionModuleC(x,filter1_1x1=320,filter2_1x1=192,filter3_1x1=384,filter3_1x3=384,filter3_3x1=384,filter4_1x1=448,filter4_3x3=384,filter4_1x3=384,filter4_3x1=384);
 
     x = self.inceptionModuleC(x,filter1_1x1=320,filter2_1x1=192,filter3_1x1=384,filter3_1x3=384,filter3_3x1=384,filter4_1x1=448,filter4_3x3=384,filter4_1x3=384,filter4_3x1=384);
-    # print(x.shape)
-    # x = GlobalAveragePooling2D()(x)
-    # print(x.shape)
-    # x = Dropout(0.4)(x)
-    # x = Dense(1, activation='sigmoid', name='output')(x)
+  
   
     model = Model(inputs=input, outputs =[x, x1], name='inception_v3')
     # model.summary()
@@ -224,7 +212,7 @@ def MRNet_inc_model(combination = ["abnormal", "axial"]):
   model.add(MRNet_inception_layer(b_size))
   model(Input(shape=(None, 299, 299, 3)))
   model.summary()
-  model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=True), metrics=['accuracy'])
+  model.compile(optimizer='RMSprop', loss=tf.keras.losses.BinaryCrossentropy(), metrics=[binary_accuracy])
 
   checkpoint_path = "training_inception/" + combination[0] + "/" + combination[1]+"/cp.ckpt"
   checkpoint_dir = os.path.dirname(checkpoint_path)
