@@ -41,10 +41,10 @@ def partition(data_path):
       data_valid = list(csv.reader(csvfile))
 
   for item in data_train:
-    labels[item[0]]["ACL"] = item[1]
+    labels[item[0]]["ACL"] = int(item[1])
 
   for item in data_valid:
-    labels[item[0]]["ACL"] = item[1]
+    labels[item[0]]["ACL"] = int(item[1])
 
   with open(f'{data_path}/train-meniscus.csv', newline='') as csvfile:
       data_train = list(csv.reader(csvfile))
@@ -53,8 +53,8 @@ def partition(data_path):
       data_valid = list(csv.reader(csvfile))
 
   for item in data_train:
-    labels[item[0]]["meniscus"] = item[1]
+    labels[item[0]]["meniscus"] = int(item[1])
 
   for item in data_valid:
-    labels[item[0]]["meniscus"] = item[1]
+    labels[item[0]]["meniscus"] = int(item[1])
   return partition, labels
