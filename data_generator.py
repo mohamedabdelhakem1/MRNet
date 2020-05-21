@@ -83,9 +83,9 @@ class MRNet_data_generator(keras.utils.Sequence):
 
   def augment_data(self, exam, label, batch_size=1, use_random_rotation=True, use_random_shear=False, use_random_shift=True, use_random_flip=True):
     if label == 0 and self.class_weight[0] > self.class_weight[1]:
-      batch_size = int(((batch_size+1)*self.class_weight[0]) - ((batch_size+1)*self.class_weight[1]))
+      batch_size = int((self.class_weight[0]/self.class_weight[1])*(batch_size+1))
     elif label == 1 and self.class_weight[0] < self.class_weight[1]:
-      batch_size = int(((batch_size+1)*self.class_weight[1]) - ((batch_size+1)*self.class_weight[0]))
+      batch_size = int((self.class_weight[1]/self.class_weight[0])*(batch_size+1))
     augmented_batch = []
     augmented_batch_labels = []
     e = []
