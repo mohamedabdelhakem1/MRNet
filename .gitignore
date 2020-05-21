@@ -1,3 +1,6 @@
 *.npy
 *.csv
 *.DS_Store
+*.ckpt
+*.hdf5
+*.h5
