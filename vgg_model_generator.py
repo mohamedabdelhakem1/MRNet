@@ -9,35 +9,35 @@ from tensorflow.keras.initializers import GlorotUniform as GU
 
 MEAN = 0.0
 STDDEV = 0.01
-
+SEED = 5
 class VGG_block(keras.layers.Layer):
   def __init__(self, input_shape=(224,224,3)):
     super(VGG_block, self).__init__()
-    self.conv1_1 = Conv2D(input_shape=input_shape,filters=64,kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=RN(mean=MEAN, stddev=STDDEV, seed=0))
-    self.conv1_2 = Conv2D(filters=64,kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv1_1 = Conv2D(input_shape=input_shape,filters=64,kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv1_2 = Conv2D(filters=64,kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
     self.max_pooling1 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv2_1 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv2_2 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv2_1 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv2_2 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
     self.max_pooling2 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv3_1 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv3_2 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv3_3 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv3_1 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv3_2 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv3_3 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
     self.max_pooling3 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv4_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv4_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv4_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv4_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv4_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv4_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
     self.max_pooling4 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv5_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv5_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
-    self.conv5_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv5_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv5_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
+    self.conv5_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU(SEED))
     self.max_pooling5 = MaxPool2D(pool_size=(2,2),strides=(2,2))
     # self.avg_pooling = AveragePooling2D(pool_size=(7, 7), padding="same")
     # self.model = keras.Model(inputs= self.conv1_1, outputs=self.max_pooling5)
@@ -74,7 +74,7 @@ class MRNet_vgg_layer(keras.layers.Layer):
     self.vgg = VGG_block(input_shape=input_shape[2:])
     self.avg_pooling = AveragePooling2D(pool_size=(7, 7), padding="same")
     self.dropout = Dropout(0.5)
-    self.fc = Dense(1, activation="sigmoid", input_dim=512, kernel_initializer=GU())
+    self.fc = Dense(1, activation="sigmoid", input_dim=512, kernel_initializer=GU(SEED))
     self.b_size = batch_size
     
 
@@ -112,15 +112,16 @@ def MRNet_vgg_model(init_weights, combination = ["abnormal", "axial"]):
   model.add(MRNet_vgg_layer((None, None, 224, 224, 3), b_size))
   model(Input(shape=(None, 224, 224, 3)))
   model.compile(
-      optimizer=tf.keras.optimizers.Adam(lr=1e-3),
+      optimizer=tf.keras.optimizers.Adam(lr=0.00001),
       loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
-
-  checkpoint_path = "training_vgg/" + combination[0] + "/" + combination[1]+"/cp.ckpt"
-  checkpoint_dir = os.path.dirname(checkpoint_path)
+  data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
+  checkpoint_dir = data_path+"training_vgg/" + combination[0] + "/" + combination[1] + "/"
+  # checkpoint_dir = os.path.dirname(checkpoint_path)
   if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
-  cp_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+  os.chdir(checkpoint_dir)
+  cp_callback = keras.callbacks.ModelCheckpoint(checkpoint_dir+"weights.{epoch:02d}.hdf5",
                                                  save_weights_only=True,
                                                  verbose=1)
   tcb = TestCallback(model)

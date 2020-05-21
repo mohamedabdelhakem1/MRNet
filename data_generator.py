@@ -11,7 +11,7 @@ STDDEV = 49.73
 class MRNet_data_generator(keras.utils.Sequence):
   def __init__(self, datapath, IDs, labels, batch_size = 1, shuffle=True,
                scale_to = (256, 256), label_type="abnormal", exam_type="axial",
-               train=True, model="vgg", aug_size=8):
+               train=True, model="vgg", aug_size=1, class_weight={0:1, 1:1}):
     self.path = datapath
     self.n = 0
     self.IDs = IDs
@@ -22,6 +22,7 @@ class MRNet_data_generator(keras.utils.Sequence):
     self.label_type = label_type
     self.exam_type = exam_type
     self.model = model
+    self.class_weight=class_weight
     self.aug_size=aug_size
     # self.cache_size = cache_size
     if train:
@@ -103,8 +104,10 @@ class MRNet_data_generator(keras.utils.Sequence):
     return X, y
 
   def augment_data(self, exam, label, batch_size=1, use_random_rotation=True, use_random_shear=False, use_random_shift=True, use_random_flip=True):
-    if (label == 0):
-      batch_size = (batch_size*5)+1
+    if label == 0 and self.class_weight[0] > self.class_weight[1]:
+      batch_size = int(((batch_size+1)*self.class_weight[0]) - ((batch_size+1)*self.class_weight[1]))
+    elif label == 1 and self.class_weight[0] < self.class_weight[1]:
+      batch_size = int(((batch_size+1)*self.class_weight[1]) - ((batch_size+1)*self.class_weight[0]))
     augmented_batch = []
     augmented_batch_labels = []
     e = []

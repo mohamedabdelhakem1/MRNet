@@ -1,3 +1,7 @@
+*
 *.npy
 *.csv
 *.DS_Store
+
+!*.py
+!.gitignore
