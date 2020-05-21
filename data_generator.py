@@ -103,6 +103,8 @@ class MRNet_data_generator(keras.utils.Sequence):
     return X, y
 
   def augment_data(self, exam, label, batch_size=1, use_random_rotation=True, use_random_shear=False, use_random_shift=True, use_random_flip=True):
+    if (label == 0):
+      batch_size = (batch_size*5)+1
     augmented_batch = []
     augmented_batch_labels = []
     e = []

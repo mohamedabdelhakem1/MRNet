@@ -3,34 +3,41 @@ import numpy as np
 from keras.layers import Conv2D,Input, MaxPool2D, AveragePooling2D, Dropout, Dense, Flatten
 import tensorflow as tf
 import os
+from tensorflow.keras.initializers import RandomNormal as RN
+from tensorflow.keras.initializers import GlorotNormal as GN
+from tensorflow.keras.initializers import GlorotUniform as GU
+
+MEAN = 0.0
+STDDEV = 0.01
+
 class VGG_block(keras.layers.Layer):
   def __init__(self, input_shape=(224,224,3)):
     super(VGG_block, self).__init__()
-    self.conv1_1 = Conv2D(input_shape=input_shape,filters=64,kernel_size=(3,3), padding="same", activation="relu")
-    self.conv1_2 = Conv2D(filters=64,kernel_size=(3,3), padding="same", activation="relu")
+    self.conv1_1 = Conv2D(input_shape=input_shape,filters=64,kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=RN(mean=MEAN, stddev=STDDEV, seed=0))
+    self.conv1_2 = Conv2D(filters=64,kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
     self.max_pooling1 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv2_1 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv2_2 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu")
+    self.conv2_1 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv2_2 = Conv2D(filters=128, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
     self.max_pooling2 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv3_1 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv3_2 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv3_3 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu")
+    self.conv3_1 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv3_2 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv3_3 = Conv2D(filters=256, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
     self.max_pooling3 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv4_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv4_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv4_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu")
+    self.conv4_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv4_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv4_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
     self.max_pooling4 = MaxPool2D(pool_size=(2,2),strides=(2,2))
 
 
-    self.conv5_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv5_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu")
-    self.conv5_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu")
+    self.conv5_1 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv5_2 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
+    self.conv5_3 = Conv2D(filters=512, kernel_size=(3,3), padding="same", activation="relu", kernel_initializer=GU())
     self.max_pooling5 = MaxPool2D(pool_size=(2,2),strides=(2,2))
     # self.avg_pooling = AveragePooling2D(pool_size=(7, 7), padding="same")
     # self.model = keras.Model(inputs= self.conv1_1, outputs=self.max_pooling5)
@@ -67,7 +74,7 @@ class MRNet_vgg_layer(keras.layers.Layer):
     self.vgg = VGG_block(input_shape=input_shape[2:])
     self.avg_pooling = AveragePooling2D(pool_size=(7, 7), padding="same")
     self.dropout = Dropout(0.5)
-    self.fc = Dense(1, activation="sigmoid", input_dim=512)
+    self.fc = Dense(1, activation="sigmoid", input_dim=512, kernel_initializer=GU())
     self.b_size = batch_size
     
 
@@ -88,12 +95,26 @@ class MRNet_vgg_layer(keras.layers.Layer):
     return (None, 1)
 
 
-def MRNet_vgg_model(combination = ["abnormal", "axial"]):
+def MRNet_vgg_model(init_weights, combination = ["abnormal", "axial"]):
+  METRICS = [
+    tf.keras.metrics.TruePositives(name='tp'),
+    tf.keras.metrics.FalsePositives(name='fp'),
+    tf.keras.metrics.TrueNegatives(name='tn'),
+    tf.keras.metrics.FalseNegatives(name='fn'), 
+    tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+    tf.keras.metrics.Precision(name='precision'),
+    tf.keras.metrics.Recall(name='recall'),
+    tf.keras.metrics.AUC(name='auc'),
+  ]
+
   b_size = 1
   model = keras.Sequential()
   model.add(MRNet_vgg_layer((None, None, 224, 224, 3), b_size))
   model(Input(shape=(None, 224, 224, 3)))
-  model.compile(optimizer=tf.keras.optimizers.Adam(), loss="binary_crossentropy", metrics=['accuracy'])
+  model.compile(
+      optimizer=tf.keras.optimizers.Adam(lr=1e-3),
+      loss=keras.losses.BinaryCrossentropy(),
+      metrics=METRICS)
 
   checkpoint_path = "training_vgg/" + combination[0] + "/" + combination[1]+"/cp.ckpt"
   checkpoint_dir = os.path.dirname(checkpoint_path)
@@ -102,8 +123,21 @@ def MRNet_vgg_model(combination = ["abnormal", "axial"]):
   cp_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
-  return model, cp_callback
+  tcb = TestCallback(model)
+  return model, [cp_callback, tcb]
 
+class TestCallback(tf.keras.callbacks.Callback):
+  def __init__(self, model):
+    super(TestCallback, self).__init__()
+    self.model = model
+
+  def on_epoch_end(self, epoch, logs=None):
+    if(epoch == 0):
+      self.w = self.model.layers[0].get_weights()[0]
+      return
+    self.w_after = self.model.layers[0].get_weights()[0]
+    print('  TestCallback: ', (self.w == self.w_after).all())
+    self.w = self.w_after
 
 
 
