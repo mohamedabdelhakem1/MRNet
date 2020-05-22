@@ -101,7 +101,7 @@ def scheduler(epoch):
   else:
     return 0.001 * tf.math.exp(0.1 * (10 - epoch))
 
-def MRNet_vgg_model(batch_size, combination = ["abnormal", "axial"]):
+def MRNet_vgg_model(batch_size, lr, combination = ["abnormal", "axial"]):
   METRICS = [
     tf.keras.metrics.TruePositives(name='tp'),
     tf.keras.metrics.FalsePositives(name='fp'),
@@ -118,7 +118,7 @@ def MRNet_vgg_model(batch_size, combination = ["abnormal", "axial"]):
   model.add(MRNet_vgg_layer((None, None, 224, 224, 3), b_size))
   model(Input(shape=(None, 224, 224, 3)))
   model.compile(
-      optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-2),
+      optimizer=tf.keras.optimizers.Adam(lr=lr),
       loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
   data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
