@@ -178,10 +178,11 @@ class MRNet_inception_layer(keras.layers.Layer):
 
   def compute_output_shape(self, input_shape):
     return (None, 1)
-
+  
   def call(self, inputs):
     arr1 = []
     for index in range(self.b_size):
+     
       f_list = self.inception(inputs[index])
       out1 = tf.squeeze(self.avg_pooling1(f_list), axis=[1, 2])
       out1 = keras.backend.max(out1, axis=0, keepdims=True)
@@ -196,7 +197,7 @@ def MRNet_inc_model(combination = ["abnormal", "axial"]):
   b_size = 1
   model = keras.Sequential()
   model.add(MRNet_inception_layer(b_size))
-  model(Input(shape=(None, 299, 299, 3)))
+  model(Input(shape=(None ,299, 299, 3)))
   model.summary()
   METRICS = [
     tf.keras.metrics.TruePositives(name='tp'),
@@ -208,73 +209,30 @@ def MRNet_inc_model(combination = ["abnormal", "axial"]):
     tf.keras.metrics.Recall(name='recall'),
     tf.keras.metrics.AUC(name='auc'),
   ]
-  initial_learning_rate = 0.045
+  initial_learning_rate = 0.0001
   lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate,
-    decay_steps=2260,
-    decay_rate=0.94,
-    staircase=True)
-  model.compile(optimizer=tf.keras.optimizers.RMSprop(
-    learning_rate=lr_schedule,
-    rho=0.9,
-    momentum=0.9,
-    epsilon=1,
-    clipnorm=2.0
-  ),   loss=keras.losses.BinaryCrossentropy(),
+    decay_steps=1017,
+    decay_rate=0.94)
+  model.compile(
+   optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+    # optimizer=tf.keras.optimizers.RMSprop(
+    # learning_rate=lr_schedule,
+    # rho=0.9,
+    # momentum=0.9,
+    # epsilon=1,
+    # clipnorm=2.0)
+    ,   loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
-    
-  checkpoint_path = "training_inception/" + combination[0] + "/" + combination[1]+"/"
-  checkpoint_dir = os.path.dirname(checkpoint_path)
+
+  data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
+  checkpoint_dir = data_path+"training_inception_no_aug/" + combination[0] + "/" + combination[1] + "/"
+  # checkpoint_dir = os.path.dirname(checkpoint_path)
   if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
   os.chdir(checkpoint_dir)
-  cp_callback = keras.callbacks.ModelCheckpoint(checkpoint_dir+"weights{epoch:02d}.hdf5",
+  cp_callback = keras.callbacks.ModelCheckpoint(checkpoint_dir+"weights.{epoch:02d}.hdf5",
                                                  save_weights_only=True,
                                                  verbose=1)
-  # print(os.path.abspath(os.getcwd()))
-  # checkpoint_path = "training_inception/" + combination[0] + "/" + combination[1]+"/cp.ckpt"
-  # checkpoint_dir = os.path.dirname(checkpoint_path)
-  # print(checkpoint_dir)
-  # if not os.path.exists(checkpoint_dir):
-  #   os.makedirs(checkpoint_dir)
-  # cp_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-  #                                                save_weights_only=True,
-  #                                                verbose=1)
+
   return model, cp_callback
-  # uncomment for adding the auxillary classifier
-# class MRNet_inception_layer(keras.layers.Layer):
-#   def __init__(self, batch_size):
-#     super(MRNet_inception_layer, self).__init__()
-#     self.inception = inceptionV3((299, 299, 3)).getModel()
-#     self.avg_pooling1 = AveragePooling2D(pool_size=(8, 8), padding="same")
-#     self.avg_pooling2 = AveragePooling2D(pool_size=(5, 5), padding="same")
-#     self.d1 = Dropout(0.5)
-#     self.d2 = Dropout(0.5)
-
-#     self.fc1 = Dense(1, activation="sigmoid", input_dim=2048)
-#     self.fc2 = Dense(1, activation="sigmoid", input_dim=128)
-#     self.b_size = batch_size
-
-#   def compute_output_shape(self, input_shape):
-#     return (None, 2)
-
-#   def call(self, inputs):
-#     arr1 = []
-#     arr2 = []
-#     for index in range(self.b_size):
-#       f_list = self.inception(inputs[index])
-#       out1 = tf.squeeze(self.avg_pooling1(f_list[0]), axis=[1, 2])
-#       out1 = keras.backend.max(out1, axis=0, keepdims=True)
-#       out1 = tf.squeeze(out1)
-#       out2 = tf.squeeze(self.avg_pooling2(f_list[1]), axis=[1, 2])
-#       out2 = keras.backend.max(out2, axis=0, keepdims=True)
-#       out2 = tf.squeeze(out2)
-#       arr1.append(out1)
-#       arr2.append(out2)
-#     out1 = tf.stack(arr1, axis=0)
-#     out2 = tf.stack(arr2, axis=0)
-#     out1 = tf.squeeze(self.fc1(self.d1(out1)))
-#     out2 = tf.squeeze(self.fc2(self.d2(out2)))
-#     out = tf.stack([out1, out2], axis = -1)
-#     out = tf.reshape(out, shape=(self.b_size, 2))
-#     return out
