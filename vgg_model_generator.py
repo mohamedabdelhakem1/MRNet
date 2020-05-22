@@ -78,7 +78,7 @@ class MRNet_vgg_layer(keras.layers.Layer):
     self.b_size = batch_size
     
 
-  @tf.function
+  @tf.function(autograph=True)
   def call(self, inputs):
     arr = []
     for index in range(self.b_size):
@@ -86,7 +86,7 @@ class MRNet_vgg_layer(keras.layers.Layer):
       out = tf.squeeze(self.avg_pooling(out), axis=[1, 2])
       out = keras.backend.max(out, axis=0, keepdims=True)
       out = tf.squeeze(out)
-      arr.append(out)
+      arr.append(out) 
     output = tf.stack(arr, axis=0)
     output = self.fc(self.dropout(output))
     return output
@@ -95,7 +95,13 @@ class MRNet_vgg_layer(keras.layers.Layer):
     return (None, 1)
 
 
-def MRNet_vgg_model(init_weights, combination = ["abnormal", "axial"]):
+def scheduler(epoch):
+  if epoch < 10:
+    return 0.001
+  else:
+    return 0.001 * tf.math.exp(0.1 * (10 - epoch))
+
+def MRNet_vgg_model(batch_size, combination = ["abnormal", "axial"]):
   METRICS = [
     tf.keras.metrics.TruePositives(name='tp'),
     tf.keras.metrics.FalsePositives(name='fp'),
@@ -107,12 +113,12 @@ def MRNet_vgg_model(init_weights, combination = ["abnormal", "axial"]):
     tf.keras.metrics.AUC(name='auc'),
   ]
 
-  b_size = 1
+  b_size = batch_size
   model = keras.Sequential()
   model.add(MRNet_vgg_layer((None, None, 224, 224, 3), b_size))
   model(Input(shape=(None, 224, 224, 3)))
   model.compile(
-      optimizer=tf.keras.optimizers.Adam(lr=0.00001),
+      optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-2),
       loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
   data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
