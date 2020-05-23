@@ -2,7 +2,7 @@ import keras
 import numpy as np
 import os
 from PIL import Image
-import random
+import random, copy
 
 MAX_PIXEL_VAL = 255
 MEAN = 58.09
