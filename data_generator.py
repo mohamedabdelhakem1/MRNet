@@ -9,12 +9,13 @@ MEAN = 58.09
 STDDEV = 49.73
 
 class MRNet_data_generator(keras.utils.Sequence):
-  def __init__(self, datapath, IDs, labels, batch_size = 1, shuffle=True,
+  def __init__(self, datapath, IDs, labels,class_count, batch_size = 1, shuffle=True,
                scale_to = (256, 256), label_type="abnormal", exam_type="axial",
-               data_type='train', model="vgg", aug_size=1, class_weight={0:1, 1:1}):
+               data_type='train', model="vgg", aug_size=1):
     print("Initializing Data Generator:")
     self.path = datapath
     self.n = 0
+    self.original_IDs = IDs
     self.IDs = IDs
     self.labels = labels
     self.batch_size = batch_size
@@ -23,7 +24,17 @@ class MRNet_data_generator(keras.utils.Sequence):
     self.label_type = label_type
     self.exam_type = exam_type
     self.model = model
-    self.class_weight=class_weight
+    self.current_exam = None
+    self.class_count=class_count
+    if class_count[0] > class_count[1]:
+      self.factor = class_count[0] / class_count[1]
+      self.repeat = 1
+    else:
+      self.factor = class_count[1] / class_count[0]
+      self.repeat = 0
+    
+    self.temp_n = 0
+    print('factor : ', self.factor)
     self.aug_size=aug_size
     self.data_type = data_type
     self.data_path = os.path.join(self.path, self.data_type)
@@ -31,14 +42,26 @@ class MRNet_data_generator(keras.utils.Sequence):
     print("data type: ", self.data_type)
     print("Combination: ", self.label_type, " and " , self.exam_type)
     print("data path: ", self.data_path)
-    
+    self.on_epoch_end()
     self.end = self.__len__()
     print("Number of inputs: ", self.end)
     print("input size: ", self.scale_to)
-    self.on_epoch_end()
+    
+
+  def _repeat_exams(self):
+    self.IDs = self.original_IDs
+    f = self.factor - 1
+    repeated = int(f * self.class_count[self.repeat])
+    keys = []
+    for k in self.IDs[self.data_type][self.exam_type]:
+      if self.repeat == self.labels[k][self.label_type]:
+        keys.append(k)
+    keys = random.choices(keys, k=repeated)
+    self.IDs[self.data_type][self.exam_type] += keys    
 
   def on_epoch_end(self):
     'Updates indexes after each epoch'
+    self._repeat_exams()
     self.indexes = np.arange(len(self.IDs[self.data_type][self.exam_type]))
     if self.shuffle == True:
         np.random.shuffle(self.indexes)
@@ -79,13 +102,14 @@ class MRNet_data_generator(keras.utils.Sequence):
     list_IDs_temp = [self.IDs[self.data_type][self.exam_type][k] for k in indexes]
     X, y = self.__data_generation(list_IDs_temp)
     X, y = self.augment_data(X[0], y[0], batch_size=self.aug_size)
+    self.current_exam = (X, y)
     return X, y
 
   def augment_data(self, exam, label, batch_size=1, use_random_rotation=True, use_random_shear=False, use_random_shift=True, use_random_flip=True):
-    if label == 0 and self.class_weight[0] > self.class_weight[1]:
-      batch_size = int((self.class_weight[0]/self.class_weight[1])*(batch_size+1))
-    elif label == 1 and self.class_weight[0] < self.class_weight[1]:
-      batch_size = int((self.class_weight[1]/self.class_weight[0])*(batch_size+1))
+    # if label == 0 and self.class_weight[0] > self.class_weight[1]:
+    #   batch_size = int((self.class_weight[0]/self.class_weight[1])*(batch_size+1))
+    # elif label == 1 and self.class_weight[0] < self.class_weight[1]:
+    #   batch_size = int((self.class_weight[1]/self.class_weight[0])*(batch_size+1))
     augmented_batch = []
     augmented_batch_labels = []
     e = []

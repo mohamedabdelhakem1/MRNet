@@ -193,12 +193,7 @@ class MRNet_inception_layer(keras.layers.Layer):
     return out1
 
 
-def MRNet_inc_model(combination = ["abnormal", "axial"]):
-  b_size = 1
-  model = keras.Sequential()
-  model.add(MRNet_inception_layer(b_size))
-  model(Input(shape=(None ,299, 299, 3)))
-  model.summary()
+def MRNet_inc_model(batch_size, combination = ["abnormal", "axial"]):
   METRICS = [
     tf.keras.metrics.TruePositives(name='tp'),
     tf.keras.metrics.FalsePositives(name='fp'),
@@ -209,6 +204,12 @@ def MRNet_inc_model(combination = ["abnormal", "axial"]):
     tf.keras.metrics.Recall(name='recall'),
     tf.keras.metrics.AUC(name='auc'),
   ]
+  b_size = batch_size
+  model = keras.Sequential()
+  model.add(MRNet_inception_layer(b_size))
+  model(Input(shape=(None ,299, 299, 3)))
+  model.summary()
+
   initial_learning_rate = 0.0001
   lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate,
@@ -226,7 +227,7 @@ def MRNet_inc_model(combination = ["abnormal", "axial"]):
       metrics=METRICS)
 
   data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
-  checkpoint_dir = data_path+"training_inception_no_aug/" + combination[0] + "/" + combination[1] + "/"
+  checkpoint_dir = data_path+"training_inception/" + combination[0] + "/" + combination[1] + "/"
   # checkpoint_dir = os.path.dirname(checkpoint_path)
   if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)

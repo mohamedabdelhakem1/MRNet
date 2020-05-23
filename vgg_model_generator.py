@@ -121,6 +121,7 @@ def MRNet_vgg_model(batch_size, combination = ["abnormal", "axial"]):
       optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-2),
       loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
+      
   data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
   checkpoint_dir = data_path+"training_vgg/" + combination[0] + "/" + combination[1] + "/"
   # checkpoint_dir = os.path.dirname(checkpoint_path)
