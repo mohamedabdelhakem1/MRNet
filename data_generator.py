@@ -49,7 +49,7 @@ class MRNet_data_generator(keras.utils.Sequence):
     
 
   def _repeat_exams(self):
-    self.IDs = self.original_IDs.copy()
+    self.IDs = copy.deepcopy(self.original_IDs)
     f = self.factor - 1
     repeated = int(f * self.class_count[self.repeat])
     keys = []
