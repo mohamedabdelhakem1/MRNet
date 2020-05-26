@@ -9,9 +9,9 @@ MEAN = 58.09
 STDDEV = 49.73
 
 class MRNet_data_generator(keras.utils.Sequence):
-  def __init__(self, datapath, IDs, labels,class_count, batch_size = 1, shuffle=True,
+  def __init__(self, datapath, IDs, labels,class_count=None, batch_size = 1, shuffle=True,
                scale_to = (256, 256), label_type="abnormal", exam_type="axial",
-               data_type='train', model="vgg", aug_size=1):
+               data_type='train', model="vgg", aug_size=1, keep_original=1):
     print("Initializing Data Generator:")
     self.path = datapath
     self.n = 0
@@ -26,7 +26,10 @@ class MRNet_data_generator(keras.utils.Sequence):
     self.model = model
     self.current_exam = None
     self.class_count=class_count
-    if class_count[0] > class_count[1]:
+    self.keep_original = keep_original
+    if class_count is None:
+      self.factor = 1
+    elif class_count[0] > class_count[1]:
       self.factor = class_count[0] / class_count[1]
       self.repeat = 1
     else:
@@ -51,6 +54,8 @@ class MRNet_data_generator(keras.utils.Sequence):
   def _repeat_exams(self):
     self.IDs = copy.deepcopy(self.original_IDs)
     if self.data_type == 'valid':
+      return
+    if self.factor == 1:
       return
     f = self.factor - 1
     repeated = int(f * self.class_count[self.repeat])
@@ -114,15 +119,18 @@ class MRNet_data_generator(keras.utils.Sequence):
     #   batch_size = int((self.class_weight[1]/self.class_weight[0])*(batch_size+1))
     augmented_batch = []
     augmented_batch_labels = []
-    e = []
-    for s in range(0, exam.shape[0]):
-      scan = exam[s]
-      scan = scan.reshape((self.scale_to[0], self.scale_to[1]))
-      scan = np.array([scan, scan, scan]).reshape((self.scale_to[0], self.scale_to[1], 3))
-      e.append(scan)
+    if self.keep_original:
+      e = []
+      for s in range(0, exam.shape[0]):
+        scan = exam[s]
+        scan = scan.reshape((self.scale_to[0], self.scale_to[1]))
+        scan = np.array([scan, scan, scan]).reshape((self.scale_to[0], self.scale_to[1], 3))
+        e.append(scan)
     
-    augmented_batch.append(e)
-    augmented_batch_labels.append(label)
+      augmented_batch.append(e)
+      augmented_batch_labels.append(label)
+    else:
+      batch_size += 1
     for i in range (0, batch_size):
       e = []
       for s in range(0, exam.shape[0]):
