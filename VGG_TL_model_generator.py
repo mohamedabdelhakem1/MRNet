@@ -86,7 +86,7 @@ def MRNet_vgg_tl_model(batch_size, lr, combination = ["abnormal", "axial"]):
 
 class validation_Callback(tf.keras.callbacks.Callback):
   def __init__(self, model, valid_data_gen):
-    super(TestCallback, self).__init__()
+    super(validation_Callback, self).__init__()
     self.model = model
     self.valid_data_gen = valid_data_gen
 
@@ -97,11 +97,11 @@ class validation_Callback(tf.keras.callbacks.Callback):
     fn = 0
     y_true = []
     y_score = []
-    for i in range(len(valid_data_gen)):
-      x, y = next(valid_data_gen)
-      _y = model.predict_classes(x, batch_size=1, verbose=0)
-      _y_score = model.predict_proba(x, batch_size=1)
-      y_score.append(_y_score[0][0])
+    for i in range(len(self.valid_data_gen)):
+      x, y = next(self.valid_data_gen)
+      _y = self.model.predict_classes(x, batch_size=1, verbose=0)
+      # _y_score = self.model.predict_proba(x, batch_size=1)
+      # y_score.append(_y_score[0][0])
       y_true.append(y[0])
       if _y[0][0] == 1:
         if _y[0][0] == y[0]:
@@ -113,14 +113,14 @@ class validation_Callback(tf.keras.callbacks.Callback):
           tn += 1
         else:
           fn += 1
-    y_score = np.array(y_score)
+    # y_score = np.array(y_score)
     y_true = np.array(y_true)
-    fpr, tpr, _ = roc_curve(y_true, y_score)
-    auc = roc_auc(fpr, tpr)
+    # fpr, tpr, _ = roc_curve(y_true, y_score)
+    # auc = roc_auc(fpr, tpr)
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
     f1 = 2*((precision*recall)/(precision+recall))
-    print ("\n validation: tp = ", tp, " fp = ", fp, " tn = ", tn, " fn = ", fn, " accuracy = ", (tp+tn)/(len(valid_data_gen)), " auc = ", auc, "F1 Score = ", f1, "\n")
+    print ("\n validation: tp = ", tp, " fp = ", fp, " tn = ", tn, " fn = ", fn, " accuracy = ", (tp+tn)/(len(self.valid_data_gen)), "F1 Score = ", f1, "\n")
 
     
 
