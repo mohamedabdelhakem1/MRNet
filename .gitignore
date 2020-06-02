@@ -1,4 +1,14 @@
+*
+*/*.*
+*.*
+
 !*.py
-!*.ipynb
 !.gitignore
+<<<<<<< HEAD
 *.pyc
+=======
+!*.pdf
+!*.xlsx
+!*.ipynb
+
+>>>>>>> 51e44ab6c431299713ef63d92e6ff1706aedfcdc

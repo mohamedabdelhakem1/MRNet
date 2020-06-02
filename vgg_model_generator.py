@@ -71,8 +71,11 @@ class VGG_block(keras.layers.Layer):
 class MRNet_vgg_layer(keras.layers.Layer):
   def __init__(self, input_shape, batch_size):
     super(MRNet_vgg_layer, self).__init__()
+    # (1, s, 224, 224, 3)
     self.vgg = VGG_block(input_shape=input_shape[2:])
+    #(s, 7, 7, 512)
     self.avg_pooling = AveragePooling2D(pool_size=(7, 7), padding="same")
+    #(s, 1, 1, 512)
     self.dropout = Dropout(0.5)
     self.fc = Dense(1, activation="sigmoid", input_dim=512, kernel_initializer=GU(SEED))
     self.b_size = batch_size
@@ -84,11 +87,16 @@ class MRNet_vgg_layer(keras.layers.Layer):
     for index in range(self.b_size):
       out = self.vgg(inputs[index])
       out = tf.squeeze(self.avg_pooling(out), axis=[1, 2])
+      #(s, 512)
       out = keras.backend.max(out, axis=0, keepdims=True)
+      #(1, 512)
       out = tf.squeeze(out)
+      #(512)
       arr.append(out) 
     output = tf.stack(arr, axis=0)
+    #(1, 512)
     output = self.fc(self.dropout(output))
+    #(1, 1)
     return output
 
   def compute_output_shape(self, input_shape):
