@@ -1,4 +1,5 @@
 import keras
+import tensorflow as tf
 import numpy as np
 import os
 from PIL import Image
@@ -25,10 +26,21 @@ class MRNet_LR_data_generator(keras.utils.Sequence):
     self.model = model
     self.data_type = data_type
     self.data_path = os.path.join(self.path, self.data_type)
-    self.on_epoch_end()
+    self.data = []
     self.end = self.__len__()
-
+    self.predict_all()
+    self.on_epoch_end()
     
+
+  def predict_all(self):
+    print("loading data..")
+    bar = tf.keras.utils.Progbar(self.end)
+    for i in range(self.end):
+      pair = self.get(i)
+      self.data.append(pair)
+      bar.update(i)
+    bar.update(self.end, finalize=True)
+
   def on_epoch_end(self):
     'Updates indexes after each epoch'
     self.indexes = np.arange(len(self.IDs[self.data_type][self.exam_types[0]]))
@@ -61,13 +73,14 @@ class MRNet_LR_data_generator(keras.utils.Sequence):
     IDs_len = len(self.IDs[self.data_type][self.exam_types[0]])
     return int(IDs_len)
 
-  def __getitem__(self, index):
+  def get(self, index):
     'Generate one batch of data'
-    indexes = self.indexes[index:(index+1)]
-    list_IDs_temp = [self.IDs[self.data_type][self.exam_types[0]][k] for k in indexes]
-    X, y = self.__data_generation(list_IDs_temp[0])
+    X, y = self.__data_generation(self.IDs[self.data_type][self.exam_types[0]][index])
     X = self.process_data(X)
     return X, y
+  def __getitem__(self, index):
+    index = self.indexes[index]
+    return self.data[index]
 
   def process_data(self, exam):
     y_score = []

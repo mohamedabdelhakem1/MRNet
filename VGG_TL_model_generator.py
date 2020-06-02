@@ -69,7 +69,7 @@ def MRNet_vgg_tl_model(batch_size, lr, combination = ["abnormal", "axial"]):
   model.add(MRNet_vgg_layer((None, None, 224, 224, 3), b_size))
   model(Input(shape=(None, 224, 224, 3)))
   model.compile(
-      optimizer=tf.keras.optimizers.Adam(lr=lr),
+      optimizer=tf.keras.optimizers.Adam(lr=lr, decay=0.005),
       loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
   data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
