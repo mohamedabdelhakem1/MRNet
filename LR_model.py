@@ -8,7 +8,7 @@ from tensorflow.keras.initializers import RandomNormal as RN
 from tensorflow.keras.initializers import GlorotNormal as GN
 from tensorflow.keras.initializers import GlorotUniform as GU
 
-def LR_model(lr, label = "abnormal"):
+def LR_model(lr, label = "abnormal",modelName = 'vgg'):
   METRICS = [
     tf.keras.metrics.TruePositives(name='tp'),
     tf.keras.metrics.FalsePositives(name='fp'),
@@ -28,7 +28,7 @@ def LR_model(lr, label = "abnormal"):
       loss=keras.losses.BinaryCrossentropy(),
       metrics=METRICS)
   data_path = "/content/gdrive/My Drive/Colab Notebooks/MRNet/"
-  checkpoint_dir = data_path+"training_vgg_TL/" + label + "/"
+  checkpoint_dir = data_path+"training_"+modelName+"_LR/" + label + "/"
   if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
   os.chdir(checkpoint_dir)

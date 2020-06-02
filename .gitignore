@@ -1,10 +1,11 @@
+
 *
-*.npy
-*.csv
-*.DS_Store
+*/*.*
+*.*
 
 !*.py
 !.gitignore
 !*.pdf
 !*.xlsx
 !*.ipynb
+
